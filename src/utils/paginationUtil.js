@@ -4,7 +4,7 @@ module.exports = {
     const offset = page * limit;
     return { limit, offset };
   },
-  calculateTotalPages: (totalItemsCount) => {
+  calculateTotalPages: (totalItemsCount, size) => {
     return Math.ceil(totalItemsCount / size) - 1;
   },
 };

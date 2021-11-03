@@ -7,6 +7,10 @@ const User = require("../../models").User;
 const { slugify } = require("../utils/stringUtil");
 const articleService = require("../services/article.service");
 const kafkaService = require("../services/kafka.service");
+const {
+  getPaginationValues,
+  calculateTotalPages,
+} = require("../utils/paginationUtil");
 // save methods
 
 const postArticle = async (req, res) => {
@@ -63,7 +67,7 @@ const getArticleBySlug = async (req, res) => {
         { model: Comment },
       ],
     });
-    res.status(200).json({ article });
+    res.status(200).json(article);
   } catch (e) {
     res
       .status(422)
@@ -74,34 +78,31 @@ const getArticleBySlug = async (req, res) => {
 const getPaginatedArticles = async (req, res) => {
   try {
     const { size, page } = req.query;
-    const { offset, limit } = articleService.getPaginationValues(page, size);
-    const articles = await getAllArticlesCount({
+    const { offset, limit } = getPaginationValues(page, size);
+    const articles = await articleService.getAllArticlesCount({
       offset: offset,
       limit: limit,
-      include: [
-        { model: User, attributes: ["email", "username"] },
-        { model: Comment },
-      ],
+      include: [{ model: User }, { model: Comment }],
     });
     const pagination = {
       articles: articles.rows,
-      totalPages: calculateTotalPages(articles.count),
+      totalPages: calculateTotalPages(articles.count, size),
       currentPage: parseInt(page),
     };
     res.status(200).json(pagination);
   } catch (e) {
     res
       .status(422)
-      .json({ errors: { body: ["Could not load articles", e.message] } });
+      .json({ errors: { body: ["Could not load article", e.message] } });
   }
 };
 
 const getArticlesByUser = async (req, res) => {
   try {
     const { size, page } = req.query;
-    const { offset, limit } = articleService.getPaginationValues(page, size);
+    const { offset, limit } = getPaginationValues(page, size);
     const { email } = req.params;
-    const articles = await getAllArticlesCount({
+    const articles = await articleService.getAllArticlesCount({
       offset: offset,
       limit: limit,
       where: { UserEmail: email },
@@ -114,8 +115,6 @@ const getArticlesByUser = async (req, res) => {
       .json({ errors: { body: ["Could not load feed data", e.message] } });
   }
 };
-
-
 
 const externalService = async (req, res) => {
   try {
