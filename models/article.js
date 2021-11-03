@@ -1,6 +1,4 @@
 "use strict";
-const { Model } = require("sequelize");
-const favourite = require("./favourite");
 module.exports = (sequelize, DataTypes) => {
   const Article = sequelize.define(
     "Article",
